@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCAP Analyser — LeightonSec</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            color: #00ff88;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        header p { color: #666; margin-top: 8px; font-size: 0.85rem; }
+
+        .upload-section {
+            background: #111;
+            border: 2px dashed #333;
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: border-color 0.3s;
+        }
+
+        .upload-section:hover { border-color: #00ff88; }
+
+        .upload-section p { color: #666; margin-bottom: 20px; }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 12px 32px;
+            background: #111;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .upload-label:hover { background: #00ff88; color: #0a0a0a; }
+
+        #filename { color: #666; font-size: 0.85rem; margin-top: 8px; }
+
+        button {
+            padding: 12px 32px;
+            background: #00ff88;
+            color: #0a0a0a;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            display: block;
+            margin: 16px auto 0;
+        }
+
+        button:hover { background: #00cc6a; }
+        button:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        .loading { color: #666; font-size: 0.85rem; margin-top: 8px; text-align: center; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-number { font-size: 2rem; font-weight: bold; color: #00ff88; }
+        .stat-number.high { color: #ff4444; }
+        .stat-number.medium { color: #ffaa00; }
+        .stat-number.low { color: #00ff88; }
+        .stat-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        .threats-section { display: none; }
+
+        .threat-card {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 12px;
+        }
+
+        .threat-card.HIGH { border-left: 4px solid #ff4444; }
+        .threat-card.MEDIUM { border-left: 4px solid #ffaa00; }
+        .threat-card.LOW { border-left: 4px solid #00ff88; }
+
+        .threat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .threat-type { font-weight: bold; font-size: 1rem; color: #e0e0e0; }
+
+        .severity-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .severity-badge.HIGH { background: #ff4444; color: #fff; }
+        .severity-badge.MEDIUM { background: #ffaa00; color: #000; }
+        .severity-badge.LOW { background: #00ff88; color: #000; }
+
+        .threat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 0.85rem;
+        }
+
+        .threat-row:last-child { border-bottom: none; }
+        .threat-label { color: #666; }
+        .threat-value { color: #e0e0e0; text-align: right; max-width: 65%; }
+
+        .intel-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #ff4444;
+            color: #fff;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        .section-title {
+            color: #00ff88;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .no-threats {
+            text-align: center;
+            color: #00ff88;
+            padding: 40px;
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚡ PCAP Analyser</h1>
+            <p>Network Threat Detection System — LeightonSec</p>
+        </header>
+
+        <div class="upload-section">
+            <p>Upload a PCAP file to analyse for threats</p>
+            <label class="upload-label" for="pcapFile">Choose File</label>
+            <input type="file" id="pcapFile" accept=".pcap,.pcapng,.cap" onchange="updateFilename()">
+            <div id="filename">No file selected</div>
+            <button id="analyseBtn" onclick="analyseFile()" disabled>Analyse</button>
+            <div class="loading" id="loading" style="display:none">Analysing packets...</div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="stat-box">
+                <div class="stat-number" id="statPackets">0</div>
+                <div class="stat-label">Packets</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number high" id="statHigh">0</div>
+                <div class="stat-label">High Risk</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number medium" id="statMedium">0</div>
+                <div class="stat-label">Medium</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number low" id="statLow">0</div>
+                <div class="stat-label">Low Risk</div>
+            </div>
+        </div>
+
+        <div class="threats-section" id="threatsSection">
+            <p class="section-title">Detected Threats</p>
+            <div id="threatsList"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateFilename() {
+            const file = document.getElementById('pcapFile').files[0];
+            if (file) {
+                document.getElementById('filename').textContent = file.name;
+                document.getElementById('analyseBtn').disabled = false;
+            }
+        }
+
+        async function analyseFile() {
+            const file = document.getElementById('pcapFile').files[0];
+            if (!file) return;
+
+            const btn = document.getElementById('analyseBtn');
+            const loading = document.getElementById('loading');
+            btn.disabled = true;
+            loading.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/analyse', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                displayResults(data);
+
+            } catch (err) {
+                alert('Error connecting to server');
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById('statPackets').textContent = data.packet_count;
+            document.getElementById('statHigh').textContent = data.summary.high;
+            document.getElementById('statMedium').textContent = data.summary.medium;
+            document.getElementById('statLow').textContent = data.summary.low;
+
+            const threatsList = document.getElementById('threatsList');
+            const threatsSection = document.getElementById('threatsSection');
+            threatsSection.style.display = 'block';
+
+            if (data.threats.length === 0) {
+                threatsList.innerHTML = '<div class="no-threats">✅ No threats detected</div>';
+                return;
+            }
+
+            threatsList.innerHTML = data.threats.map(threat => {
+                const intel = threat.threat_intel || {};
+                const intelBadge = intel.known_malicious ? '<span class="intel-badge">KNOWN MALICIOUS</span>' : '';
+
+                return `
+                    <div class="threat-card ${threat.severity}">
+                        <div class="threat-header">
+                            <span class="threat-type">${threat.type}${intelBadge}</span>
+                            <span class="severity-badge ${threat.severity}">${threat.severity}</span>
+                        </div>
+                        <div class="threat-row">
+                            <span class="threat-label">Source IP</span>
+                            <span class="threat-value">${threat.src_ip}</span>
+                        </div>
+                        <div class="threat-row">
+                            <span class="threat-label">Detail</span>
+                            <span class="threat-value">${threat.detail}</span>
+                        </div>
+                        <div class="threat-row">
+                            <span class="threat-label">Recommendation</span>
+                            <span class="threat-value">${threat.recommendation}</span>
+                        </div>
+                        ${intel.known_malicious ? `
+                        <div class="threat-row">
+                            <span class="threat-label">Threat Intel</span>
+                            <span class="threat-value">Confidence: ${intel.confidence}% | Country: ${intel.country} | Reports: ${intel.total_reports}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
