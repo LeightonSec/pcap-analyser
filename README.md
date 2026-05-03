@@ -59,12 +59,9 @@ Every suspicious IP is checked against **AbuseIPDB** in real time:
 
 ## Setup
 
-**Requirements:** Python 3.x, Wireshark/tshark installed, AbuseIPDB API key
+**Requirements:** Python 3.x, AbuseIPDB API key
 
 ```bash
-# Install tshark (required by PyShark)
-brew install wireshark
-
 # Clone the repo
 git clone git@github.com:LeightonSec/pcap-analyser.git
 cd pcap-analyser
@@ -90,7 +87,6 @@ Then open `http://127.0.0.1:5001` in your browser.
 ## Generating Test PCAP Files
 
 ```bash
-pip install scapy
 python3 generate_test_pcaps.py
 ```
 
@@ -129,6 +125,25 @@ Visibility   → Unified Dashboard (planned)
 
 ---
 
+## ⚠️ Known Limitations
+
+- **Beaconing false positives**: The C2 beaconing detector flags any connection with
+  regular timing intervals. Legitimate traffic with consistent patterns — keep-alives,
+  NTP, streaming, background OS telemetry — can trigger this. Treat beaconing findings
+  as indicators requiring analyst review, not confirmed threats.
+
+- **Slow-rate DoS**: DoS detection measures packet volume within a 10-second sliding
+  window. Slow-rate attacks deliberately designed to stay under threshold across longer
+  time periods will not be detected. Adjust `dos_packet_count` and `dos_window_seconds`
+  in `analyser.py` if your environment requires broader coverage.
+
+- **Tunable thresholds**: All detection thresholds are set conservatively for general
+  use. High-traffic environments will need higher values to reduce false positives;
+  sensitive environments may want lower values. All thresholds are centralised in the
+  `THRESHOLDS` dict in `analyser.py`.
+
+---
+
 ## Roadmap
 
 - [ ] Live packet capture mode
@@ -142,7 +157,7 @@ Visibility   → Unified Dashboard (planned)
 
 ## Author
 
-**Leighton Wilson** — SOC Analyst | LeightonSec
+**Leighton Wilson** — Security Researcher | LeightonSec
 [LeightonSec GitHub](https://github.com/LeightonSec)
 
 ---

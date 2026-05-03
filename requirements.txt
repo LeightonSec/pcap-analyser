@@ -1,4 +1,4 @@
-pyshark
 flask
 requests
 python-dotenv
+scapy
