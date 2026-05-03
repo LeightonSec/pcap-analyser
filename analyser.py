@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from scapy.all import PcapReader, IP, TCP, ICMP, ARP, DNS
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -189,6 +189,6 @@ def analyse_pcap(filepath: str) -> dict:
         "packet_count": packet_count,
         "threats": threats,
         "threat_count": len(threats),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "filepath": filepath
     }

@@ -52,38 +52,40 @@ def analyse():
     file.save(filepath)
     logger.info(f"File uploaded: {safe_filename}")
 
-    # Run analysis
-    results = analyse_pcap(filepath)
+    try:
+        # Run analysis
+        results = analyse_pcap(filepath)
 
-    if "error" in results:
-        return jsonify(results), 500
+        if "error" in results:
+            return jsonify(results), 500
 
-    # Enrich with threat intelligence
-    results["threats"] = enrich_threats_with_intel(results["threats"])
+        # Enrich with threat intelligence
+        results["threats"] = enrich_threats_with_intel(results["threats"])
 
-    # Count by severity
-    high = sum(1 for t in results["threats"] if t["severity"] == "HIGH")
-    medium = sum(1 for t in results["threats"] if t["severity"] == "MEDIUM")
-    low = sum(1 for t in results["threats"] if t["severity"] == "LOW")
+        # Count by severity
+        high = sum(1 for t in results["threats"] if t["severity"] == "HIGH")
+        medium = sum(1 for t in results["threats"] if t["severity"] == "MEDIUM")
+        low = sum(1 for t in results["threats"] if t["severity"] == "LOW")
 
-    results["summary"] = {
-        "high": high,
-        "medium": medium,
-        "low": low,
-        "total_threats": len(results["threats"])
-    }
+        results["summary"] = {
+            "high": high,
+            "medium": medium,
+            "low": low,
+            "total_threats": len(results["threats"])
+        }
 
-    # Save report
-    report_filename = f"report_{timestamp}.json"
-    report_path = os.path.join(REPORT_FOLDER, report_filename)
-    with open(report_path, 'w') as f:
-        json.dump(results, f, indent=2)
-    logger.info(f"Report saved: {report_filename}")
+        # Save report
+        report_filename = f"report_{timestamp}.json"
+        report_path = os.path.join(REPORT_FOLDER, report_filename)
+        with open(report_path, 'w') as f:
+            json.dump(results, f, indent=2)
+        logger.info(f"Report saved: {report_filename}")
 
-    # Clean up uploaded file
-    os.remove(filepath)
+        return jsonify(results)
 
-    return jsonify(results)
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 @app.route('/reports')
 def list_reports():

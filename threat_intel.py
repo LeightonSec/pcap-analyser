@@ -1,4 +1,5 @@
 import os
+import ipaddress
 import requests
 import logging
 from dotenv import load_dotenv
@@ -53,7 +54,8 @@ def check_ip_reputation(ip: str) -> dict:
                 "isp": data.get("isp", "Unknown"),
                 "total_reports": data.get("totalReports", 0)
             }
-            _ip_cache[ip] = result
+            if len(_ip_cache) < 1000:
+                _ip_cache[ip] = result
             return result
 
     except Exception as e:
@@ -97,10 +99,7 @@ def enrich_threats_with_intel(threats: list) -> list:
 
 def _is_private_ip(ip: str) -> bool:
     """Check if IP is private/reserved — skip AbuseIPDB for these"""
-    private_ranges = [
-        "10.", "172.16.", "172.17.", "172.18.", "172.19.",
-        "172.20.", "172.21.", "172.22.", "172.23.", "172.24.",
-        "172.25.", "172.26.", "172.27.", "172.28.", "172.29.",
-        "172.30.", "172.31.", "192.168.", "127.", "0.0.0.0"
-    ]
-    return any(ip.startswith(r) for r in private_ranges)
+    try:
+        return ipaddress.ip_address(ip).is_private
+    except ValueError:
+        return True
