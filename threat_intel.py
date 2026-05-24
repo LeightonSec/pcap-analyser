@@ -3,12 +3,20 @@ import ipaddress
 import requests
 import logging
 from dotenv import load_dotenv
+from pydantic import BaseModel, ValidationError
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 ABUSEIPDB_URL = "https://api.abuseipdb.com/api/v2/check"
+
+
+class _AbuseIPDBData(BaseModel):
+    abuseConfidenceScore: int = 0
+    countryCode: str = "Unknown"
+    isp: str = "Unknown"
+    totalReports: int = 0
 API_KEY = os.getenv("ABUSEIPDB_API_KEY")
 
 # Cache checked IPs to avoid hitting API limits
@@ -45,14 +53,20 @@ def check_ip_reputation(ip: str) -> dict:
         )
 
         if response.status_code == 200:
-            data = response.json().get("data", {})
+            try:
+                data = _AbuseIPDBData.model_validate(
+                    response.json().get("data", {})
+                )
+            except ValidationError as e:
+                logger.error(f"Unexpected AbuseIPDB response schema for {ip}: {e}")
+                return {"ip": ip, "is_malicious": False, "confidence": 0, "error": "Schema validation failed"}
             result = {
                 "ip": ip,
-                "is_malicious": data.get("abuseConfidenceScore", 0) >= 50,
-                "confidence": data.get("abuseConfidenceScore", 0),
-                "country": data.get("countryCode", "Unknown"),
-                "isp": data.get("isp", "Unknown"),
-                "total_reports": data.get("totalReports", 0)
+                "is_malicious": data.abuseConfidenceScore >= 50,
+                "confidence": data.abuseConfidenceScore,
+                "country": data.countryCode,
+                "isp": data.isp,
+                "total_reports": data.totalReports
             }
             if len(_ip_cache) < 1000:
                 _ip_cache[ip] = result
