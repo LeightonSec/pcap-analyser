@@ -38,7 +38,7 @@ def check_ip_reputation(ip: str) -> dict:
         return {"ip": ip, "is_malicious": False, "confidence": 0, "error": "No API key"}
 
     try:
-        response = requests.get(
+        response = requests.get(  # gate: ignore — intentional outbound call to AbuseIPDB API for IP reputation lookup, documented in Gate 2 trust boundary map
             ABUSEIPDB_URL,
             headers={
                 "Key": API_KEY,

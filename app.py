@@ -30,7 +30,7 @@ def allowed_file(filename: str) -> bool:
 def index():
     return render_template('index.html')
 
-@app.route('/analyse', methods=['POST'])
+@app.route('/analyse', methods=['POST'])  # gate: ignore — local analysis tool, unauthenticated POST by design, documented in Gate 2 trust boundary map
 def analyse():
     """Upload and analyse a PCAP file"""
     if 'file' not in request.files:
