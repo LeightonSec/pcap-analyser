@@ -1,0 +1,18 @@
+# Accepted findings for pcap-analyser.
+# Each entry removes a finding from gate consideration — severity stays visible
+# in the report. Required fields: scanner, file, match (substring), rationale,
+# reviewer, date.
+#
+# The single HIGH is a false positive: the single-line missing_validation
+# scanner flags response.json() without seeing the Pydantic model_validate on
+# the same statement. The genuine attacker-controlled risk in this app (pcap
+# field values reaching the dashboard) is a stored/DOM XSS, which is fixed in
+# templates/index.html (escapeHtml on all innerHTML interpolations), not waived.
+
+[[accepted]]
+scanner   = "missing_validation"
+file      = "threat_intel.py"
+match     = "response.json().get(\"data\""
+rationale = "False positive. response.json() is passed directly into _AbuseIPDBData.model_validate(...) (lines 57-59), a Pydantic BaseModel with typed fields and safe defaults, inside a try/except ValidationError block that returns a safe stub on any schema mismatch. The external AbuseIPDB response is therefore validated on the same statement it is read. The single-line scanner flags the .json() access without seeing the model_validate call wrapping it."
+reviewer  = "leighton"
+date      = "2026-06-26"

@@ -229,6 +229,22 @@
     </div>
 
     <script>
+        // Escape any value before it is interpolated into innerHTML below.
+        // Threat fields originate from attacker-controlled packet contents
+        // (e.g. DNS query names) and from external threat-intel responses,
+        // so they must never be trusted as HTML.
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, function (c) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[c];
+            });
+        }
+
         function updateFilename() {
             const file = document.getElementById('pcapFile').files[0];
             if (file) {
@@ -292,27 +308,27 @@
                 const intelBadge = intel.known_malicious ? '<span class="intel-badge">KNOWN MALICIOUS</span>' : '';
 
                 return `
-                    <div class="threat-card ${threat.severity}">
+                    <div class="threat-card ${escapeHtml(threat.severity)}">
                         <div class="threat-header">
-                            <span class="threat-type">${threat.type}${intelBadge}</span>
-                            <span class="severity-badge ${threat.severity}">${threat.severity}</span>
+                            <span class="threat-type">${escapeHtml(threat.type)}${intelBadge}</span>
+                            <span class="severity-badge ${escapeHtml(threat.severity)}">${escapeHtml(threat.severity)}</span>
                         </div>
                         <div class="threat-row">
                             <span class="threat-label">Source IP</span>
-                            <span class="threat-value">${threat.src_ip}</span>
+                            <span class="threat-value">${escapeHtml(threat.src_ip)}</span>
                         </div>
                         <div class="threat-row">
                             <span class="threat-label">Detail</span>
-                            <span class="threat-value">${threat.detail}</span>
+                            <span class="threat-value">${escapeHtml(threat.detail)}</span>
                         </div>
                         <div class="threat-row">
                             <span class="threat-label">Recommendation</span>
-                            <span class="threat-value">${threat.recommendation}</span>
+                            <span class="threat-value">${escapeHtml(threat.recommendation)}</span>
                         </div>
                         ${intel.known_malicious ? `
                         <div class="threat-row">
                             <span class="threat-label">Threat Intel</span>
-                            <span class="threat-value">Confidence: ${intel.confidence}% | Country: ${intel.country} | Reports: ${intel.total_reports}</span>
+                            <span class="threat-value">Confidence: ${escapeHtml(intel.confidence)}% | Country: ${escapeHtml(intel.country)} | Reports: ${escapeHtml(intel.total_reports)}</span>
                         </div>` : ''}
                     </div>
                 `;

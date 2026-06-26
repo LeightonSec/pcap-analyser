@@ -1,7 +1,8 @@
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone
-from scapy.all import PcapReader, IP, TCP, ICMP, ARP, DNS
+
+from scapy.all import ARP, DNS, ICMP, IP, TCP, PcapReader
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

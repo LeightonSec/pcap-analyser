@@ -1,0 +1,18 @@
+# pcap-analyser is a flat-module Flask application (app.py, analyser.py,
+# threat_intel.py at repo root) launched via `python3 app.py`, NOT an
+# installable package. So there is deliberately no [build-system]/[project]
+# table and CI does not `pip install -e .`. Module resolution under test comes
+# from pytest's pythonpath below (same pattern as the other flat LeightonSec
+# repos). The test file lives at the repo root, so testpaths is "." not "tests".
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP"]
+ignore = ["E501"]

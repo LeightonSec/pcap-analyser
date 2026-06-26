@@ -1,5 +1,13 @@
-from scapy.all import wrpcap, IP, TCP, ICMP, ARP, Ether
 import random
+
+from scapy.all import ARP, DNS, DNSQR, ICMP, IP, TCP, UDP, Ether, wrpcap
+
+# A DNS query name carrying an HTML/JS payload. Used by the DNS tunnelling
+# fixture to prove an attacker-controlled packet field reaches threat["detail"],
+# which is interpolated into the dashboard. The dashboard escapes it on render
+# (templates/index.html escapeHtml), so this is the stored/DOM XSS regression
+# anchor — the payload must survive parsing intact, then be neutralised at the sink.
+XSS_DNS_PAYLOAD = "<img src=x onerror=alert(document.cookie)>.exfil.example.com"
 
 def generate_syn_flood(filename="test_syn_flood.pcap", count=200):
     """Simulate SYN flood attack"""
@@ -60,21 +68,58 @@ def generate_dos(filename="test_dos.pcap", count=1500):
     wrpcap(filename, packets)
     print(f"Generated {filename} — {count} ICMP packets")
 
+def generate_icmp_flood(filename="test_icmp_flood.pcap", count=150):
+    """Simulate ICMP flood — high ICMP volume from a single IP.
+
+    count is above the icmp_flood threshold (100) but below the dos threshold
+    (1000), so this fixture triggers ICMP Flood in isolation without also
+    tripping the DoS/DDoS detector.
+    """
+    packets = []
+    attacker_ip = "172.16.0.99"
+    victim_ip = "10.0.0.4"
+
+    for _ in range(count):
+        pkt = IP(src=attacker_ip, dst=victim_ip) / ICMP()
+        packets.append(pkt)
+
+    wrpcap(filename, packets)
+    print(f"Generated {filename} — {count} ICMP packets from single source")
+
+def generate_dns_tunnel(filename="test_dns_tunnel.pcap", query=XSS_DNS_PAYLOAD):
+    """Simulate DNS tunnelling — an over-length DNS query name.
+
+    The query name length exceeds the dns_query_length threshold (50) so the
+    detector flags it. The default query embeds an HTML/JS payload so the
+    fixture doubles as the stored/DOM XSS regression anchor.
+    """
+    packets = []
+    attacker_ip = "192.168.1.77"
+    dns_server = "10.0.0.53"
+
+    pkt = IP(src=attacker_ip, dst=dns_server) / \
+          UDP(sport=random.randint(1024, 65535), dport=53) / \
+          DNS(rd=1, qd=DNSQR(qname=query))
+    packets.append(pkt)
+
+    wrpcap(filename, packets)
+    print(f"Generated {filename} — DNS query of length {len(query)}")
+
 def generate_c2_beacon(filename="test_c2_beacon.pcap", count=20):
     """Simulate C2 beaconing — regular timed connections to same external IP"""
     packets = []
     infected_host = "192.168.1.50"
     c2_server = "185.220.101.1"
-    
+
     base_time = 1000.0
-    
+
     for i in range(count):
         timestamp = base_time + (i * 30) + random.uniform(-1, 1)
         pkt = IP(src=infected_host, dst=c2_server) / \
               TCP(sport=random.randint(1024, 65535), dport=443, flags="S")
         pkt.time = timestamp
         packets.append(pkt)
-    
+
     wrpcap(filename, packets)
     print(f"Generated {filename} — {count} beacon packets every ~30s")
 
@@ -84,5 +129,7 @@ if __name__ == "__main__":
     generate_port_scan()
     generate_arp_spoof()
     generate_dos()
+    generate_icmp_flood()
+    generate_dns_tunnel()
     generate_c2_beacon()
-    print("Done — 5 test files generated")
+    print("Done — 7 test files generated")

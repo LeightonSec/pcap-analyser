@@ -1,0 +1,11 @@
+# Direct runtime dependencies for pcap-analyser.
+# Compile with: uv pip compile requirements.in -o requirements.txt \
+#   --universal --generate-hashes --python-version 3.10
+# (3.10 is the CI matrix floor; compiling on a newer Python drops
+#  version-gated transitives that --require-hashes then rejects.)
+flask
+werkzeug
+pydantic
+requests
+scapy
+python-dotenv

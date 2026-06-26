@@ -1,7 +1,8 @@
-import os
 import ipaddress
-import requests
 import logging
+import os
+
+import requests
 from dotenv import load_dotenv
 from pydantic import BaseModel, ValidationError
 
@@ -12,11 +13,14 @@ logger = logging.getLogger(__name__)
 ABUSEIPDB_URL = "https://api.abuseipdb.com/api/v2/check"
 
 
+# Field names mirror the AbuseIPDB API response keys exactly so model_validate
+# maps them by name. They are intentionally mixedCase (the external schema);
+# renaming to snake_case would break the mapping, so N815 is suppressed here.
 class _AbuseIPDBData(BaseModel):
-    abuseConfidenceScore: int = 0
-    countryCode: str = "Unknown"
+    abuseConfidenceScore: int = 0  # noqa: N815
+    countryCode: str = "Unknown"  # noqa: N815
     isp: str = "Unknown"
-    totalReports: int = 0
+    totalReports: int = 0  # noqa: N815
 API_KEY = os.getenv("ABUSEIPDB_API_KEY")
 
 # Cache checked IPs to avoid hitting API limits

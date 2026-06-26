@@ -8,7 +8,7 @@ A network packet capture analysis tool that inspects PCAP files for malicious tr
 
 Security analysts capture network traffic using tools like Wireshark or tcpdump. This tool takes those capture files and automatically analyses them for known attack patterns — flagging threats, scoring severity, and enriching findings with real-time threat intelligence.
 
-Every uploaded PCAP is run through five detection engines and cross-referenced against AbuseIPDB's threat database before delivering a structured report.
+Every uploaded PCAP is run through seven detection engines and cross-referenced against AbuseIPDB's threat database before delivering a structured report.
 
 ---
 
@@ -54,12 +54,14 @@ Every suspicious IP is checked against **AbuseIPDB** in real time:
 - AbuseIPDB key stored in `.env` — never committed
 - Server bound to `127.0.0.1` — not exposed to external networks
 - Private IPs excluded from threat intel checks
+- Output escaping — packet field values (e.g. DNS query names) and AbuseIPDB strings are attacker-influenced, so the dashboard escapes every value before rendering it, preventing stored/DOM XSS from a maliciously crafted PCAP
+- AbuseIPDB responses are schema-validated with Pydantic before use
 
 ---
 
 ## Setup
 
-**Requirements:** Python 3.x, AbuseIPDB API key
+**Requirements:** Python 3.10+, AbuseIPDB API key
 
 ```bash
 # Clone the repo
@@ -90,11 +92,13 @@ Then open `http://127.0.0.1:5001` in your browser.
 python3 generate_test_pcaps.py
 ```
 
-Generates 5 test files covering all detection categories:
+Generates 7 test files covering all detection categories:
 - `test_syn_flood.pcap`
 - `test_port_scan.pcap`
 - `test_arp_spoof.pcap`
 - `test_dos.pcap`
+- `test_icmp_flood.pcap`
+- `test_dns_tunnel.pcap`
 - `test_c2_beacon.pcap`
 
 ---
@@ -103,7 +107,7 @@ Generates 5 test files covering all detection categories:
 
 pcap-analyser/
 ├── app.py                  # Flask server, file upload, API routes
-├── analyser.py             # Core detection engine (5 detectors)
+├── analyser.py             # Core detection engine (7 detectors)
 ├── threat_intel.py         # AbuseIPDB integration and IP enrichment
 ├── generate_test_pcaps.py  # Test PCAP generator
 ├── templates/

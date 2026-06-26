@@ -1,10 +1,12 @@
-import os
 import json
 import logging
-from datetime import datetime
-from flask import Flask, request, jsonify, render_template
-from werkzeug.utils import secure_filename
+import os
+from datetime import datetime, timezone
+
 from dotenv import load_dotenv
+from flask import Flask, jsonify, render_template, request
+from werkzeug.utils import secure_filename
+
 from analyser import analyse_pcap
 from threat_intel import enrich_threats_with_intel
 
@@ -46,7 +48,7 @@ def analyse():
 
     # Save file securely
     filename = secure_filename(file.filename)
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_filename = f"{timestamp}_{filename}"
     filepath = os.path.join(UPLOAD_FOLDER, safe_filename)
     file.save(filepath)
