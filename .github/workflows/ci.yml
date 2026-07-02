@@ -59,6 +59,6 @@ jobs:
       # security-gate is SHA-pinned (not a tag/@main): the gate moves fast and a
       # SHA is reproducible and bumped deliberately.
       - name: Install security-gate (SHA-pinned)
-        run: pip install "git+https://github.com/LeightonSec/security-gate.git@531d618231269b490fd2800484aee7e0feebca38"
+        run: pip install "git+https://github.com/LeightonSec/security-gate.git@c52a8b56b3e164f9854c646bedb5d9e70446d98e"
       - name: Security gate
         run: security-gate scan .
